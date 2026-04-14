@@ -7,9 +7,8 @@ const CLOB_BASE = 'https://clob.polymarket.com';
  */
 export default async function handler(req, res) {
   try {
-    const res1 = await fetch(`${CLOB_BASE}/markets?active=true&tag_id=12&limit=20`);
-    const data = await res1.json();
-    const markets = data.data || [];
+    const res1 = await fetch(`https://gamma-api.polymarket.com/markets?active=true&closed=false&tag_slug=sports&limit=20`);
+    const markets = await res1.json();
 
     const minVolume = parseFloat(process.env.MIN_MARKET_VOLUME || '500');
     const requireVs = process.env.REQUIRE_VS_FORMAT !== 'false';
