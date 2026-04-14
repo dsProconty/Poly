@@ -14,20 +14,14 @@ export default async function handler(req, res) {
     const minVolume = parseFloat(process.env.MIN_MARKET_VOLUME || '500');
     const requireVs = process.env.REQUIRE_VS_FORMAT !== 'false';
 
+    // Mostrar todos los campos del primer mercado para entender la estructura
+    const primerMercado = markets[0] || {};
+
     return res.json({
       total_raw: markets.length,
       filtros_activos: { minVolume, requireVs },
-      pasan_filtro: markets.filter(m =>
-        parseFloat(m.volume) > minVolume &&
-        (requireVs ? m.question?.includes(' vs ') : true)
-      ).length,
-      mercados_raw: markets.map(m => ({
-        question: m.question,
-        volume: parseFloat(m.volume) || 0,
-        active: m.active,
-        resolved: m.resolved,
-        pasa_filtro: (parseFloat(m.volume) || 0) > minVolume && (requireVs ? m.question?.includes(' vs ') : true),
-      })).sort((a, b) => b.volume - a.volume), // ordenar por volumen
+      campos_disponibles: Object.keys(primerMercado),
+      primeros_3_completos: markets.slice(0, 3),
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
