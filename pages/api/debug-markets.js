@@ -44,6 +44,9 @@ export default async function handler(req, res) {
         active: m.active,
         closed: m.closed,
         conditionId: m.conditionId || m.condition_id,
+        outcomes_raw: m.outcomes,
+        outcomePrices_raw: m.outcomePrices,
+        tokens_raw: m.tokens,
       })),
     });
   } catch (err) {
