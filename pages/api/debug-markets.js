@@ -12,41 +12,59 @@ export default async function handler(req, res) {
 
     const minVolume = parseFloat(process.env.MIN_MARKET_VOLUME || '500');
     const requireVs = process.env.REQUIRE_VS_FORMAT !== 'false';
+    const minYesProb = parseFloat(process.env.MIN_YES_PROB || '15');
+    const maxYesProb = parseFloat(process.env.MAX_YES_PROB || '85');
 
-    // Aplicar los mismos filtros que polymarket.js
-    const pasanFiltro = (markets || []).filter(m => {
-      const vol = parseFloat(m.volume) || 0;
-      const hasVs = requireVs ? m.question?.includes(' vs ') : true;
-      return vol > minVolume && hasVs;
-    });
-
-    // Para debug: mostrar top 10 por volumen sin filtro vs
-    const topPorVolumen = (markets || [])
-      .map(m => ({
+    // Parsear precios de cada mercado
+    const parsed = (markets || []).map(m => {
+      let yesPrice = 0;
+      if (Array.isArray(m.tokens)) {
+        const t = m.tokens.find(t => t.outcome?.toLowerCase() === 'yes' || t.name?.toLowerCase() === 'yes');
+        yesPrice = parseFloat(t?.price || 0);
+      }
+      if (yesPrice === 0) {
+        let outcomes = m.outcomes;
+        let prices = m.outcomePrices;
+        if (typeof outcomes === 'string') { try { outcomes = JSON.parse(outcomes); } catch { outcomes = []; } }
+        if (typeof prices === 'string') { try { prices = JSON.parse(prices); } catch { prices = []; } }
+        if (Array.isArray(outcomes) && Array.isArray(prices)) {
+          const idx = outcomes.findIndex(o => (typeof o === 'string' ? o : o?.name || '').toLowerCase() === 'yes');
+          if (idx >= 0) yesPrice = parseFloat(prices[idx]) || 0;
+        }
+      }
+      return {
         question: m.question,
         volume: parseFloat(m.volume) || 0,
-        active: m.active,
-        closed: m.closed,
+        yesProb: yesPrice * 100,
         hasVs: m.question?.includes(' vs '),
-        marketId: m.conditionId || m.condition_id,
-      }))
+        conditionId: m.conditionId || m.condition_id,
+        endDate: m.endDate || m.end_date_iso,
+      };
+    });
+
+    // Aplicar todos los filtros
+    const pasanFiltro = parsed.filter(m => {
+      const hasVs = requireVs ? m.hasVs : true;
+      const balanced = m.yesProb >= minYesProb && m.yesProb <= maxYesProb;
+      return m.volume > minVolume && hasVs && balanced;
+    }).sort((a, b) => b.volume - a.volume);
+
+    // Top 10 por volumen sin filtro de probabilidad (para diagnóstico)
+    const top10 = [...parsed]
       .sort((a, b) => b.volume - a.volume)
-      .slice(0, 10);
+      .slice(0, 10)
+      .map(m => ({ question: m.question, volume: m.volume, yesProb: m.yesProb.toFixed(1) + '%', pasaFiltroProb: m.yesProb >= minYesProb && m.yesProb <= maxYesProb }));
 
     return res.json({
       total_raw: markets.length,
       pasan_filtro: pasanFiltro.length,
-      filtros_activos: { minVolume, requireVs },
-      top10_por_volumen: topPorVolumen,
-      primeros_3_pasan_filtro: pasanFiltro.slice(0, 3).map(m => ({
+      filtros_activos: { minVolume, requireVs, minYesProb, maxYesProb },
+      top10_por_volumen: top10,
+      candidatos_para_bot: pasanFiltro.slice(0, 5).map(m => ({
         question: m.question,
-        volume: parseFloat(m.volume) || 0,
-        active: m.active,
-        closed: m.closed,
-        conditionId: m.conditionId || m.condition_id,
-        outcomes_raw: m.outcomes,
-        outcomePrices_raw: m.outcomePrices,
-        tokens_raw: m.tokens,
+        yesProb: m.yesProb.toFixed(1) + '%',
+        volume: m.volume,
+        endDate: m.endDate,
       })),
     });
   } catch (err) {
