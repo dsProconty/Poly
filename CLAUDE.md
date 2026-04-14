@@ -1,4 +1,128 @@
-# Website Development Best Practices
+# Polymarket Paper Bot — Estado del Proyecto
+
+## Qué es esto
+
+Bot de paper trading automatizado para Polymarket. Evalúa mercados deportivos activos, usa dos agentes de IA (Groq/Llama) para decidir si hay edge y cuánto apostar, y registra todo en Supabase. Corre en Vercel con cron jobs.
+
+---
+
+## Arquitectura
+
+```
+lib/
+  polymarket.js        → llama a la CLOB API de Polymarket (fetch nativo)
+  agents.js            → Agente 1 (análisis deportivo) + Agente 2 (bankroll), via Groq
+
+pages/api/
+  run-bot.js           → evalúa hasta 3 mercados por corrida, coloca apuestas en papel
+  resolve-positions.js → revisa posiciones abiertas, cierra las que ya resolvieron
+
+supabase/
+  schema.sql           → tablas: bankroll_state, positions, trades_log
+
+polym/                 → archivos fuente originales (no tocar)
+```
+
+### Tablas Supabase
+
+| Tabla | Propósito |
+|---|---|
+| `bankroll_state` | Una sola fila: `available_cash`, `initial_bankroll`, `updated_at` |
+| `positions` | Cada apuesta: mercado, equipo, stake, probabilidades, status, pnl |
+| `trades_log` | Respuestas raw de los agentes por posición |
+
+### Variables de entorno requeridas
+
+```ini
+GROQ_API_KEY=...
+NEXT_PUBLIC_SUPABASE_URL=https://xxxx.supabase.co
+SUPABASE_SERVICE_ROLE_KEY=...
+```
+
+### Cron jobs (vercel.json)
+
+| Endpoint | Schedule | Qué hace |
+|---|---|---|
+| `/api/run-bot` | `0 */6 * * *` | Cada 6 horas — evalúa mercados y apuesta |
+| `/api/resolve-positions` | `0 * * * *` | Cada hora — cierra posiciones resueltas |
+
+---
+
+## Estado actual ✅ Completado
+
+- [x] `package.json` — next@16.2.3 + @supabase/supabase-js, 0 vulnerabilidades
+- [x] `next.config.js` — mínimo
+- [x] `lib/polymarket.js` — copiado desde polym/
+- [x] `lib/agents.js` — copiado desde polym/
+- [x] `pages/api/run-bot.js` — copiado desde polym/
+- [x] `pages/api/resolve-positions.js` — copiado desde polym/
+- [x] `supabase/schema.sql` — 3 tablas con índices y constraints
+- [x] `vercel.json` — 2 cron jobs configurados
+- [x] `.env.local.example` — plantilla de variables
+- [x] `npm install` — dependencias instaladas
+
+---
+
+## Próximos pasos
+
+### 1. Supabase — Crear tablas
+1. Ir a [supabase.com](https://supabase.com) → tu proyecto → **SQL Editor**
+2. Pegar y ejecutar el contenido de `supabase/schema.sql`
+3. Verificar que las 3 tablas aparecen en **Table Editor**
+
+### 2. Variables de entorno local
+```bash
+cp .env.local.example .env.local
+# Editar .env.local con tus claves reales
+```
+
+- **GROQ_API_KEY** → [console.groq.com](https://console.groq.com) → API Keys
+- **NEXT_PUBLIC_SUPABASE_URL** → Supabase → Project Settings → API → Project URL
+- **SUPABASE_SERVICE_ROLE_KEY** → Supabase → Project Settings → API → service_role key
+
+### 3. Test local
+```bash
+npm run dev
+# En otro terminal:
+curl http://localhost:3000/api/run-bot
+curl http://localhost:3000/api/resolve-positions
+```
+
+Respuesta esperada de `run-bot`:
+```json
+{ "status": "ok", "marketsEvaluados": 3, "apuestasColocadas": 1, "cashRestante": 97.5 }
+```
+
+### 4. Deploy en Vercel
+```bash
+vercel --prod
+# Agregar las 3 env vars en Vercel Dashboard → Settings → Environment Variables
+```
+
+---
+
+## Ajustes futuros pendientes
+
+| Item | Archivo | Detalle |
+|---|---|---|
+| Timeout en Hobby plan | `pages/api/run-bot.js` | Reducir `MAX_MARKETS_PER_RUN` de 3 → 1 |
+| Auth cron | `pages/api/*.js` | Validar header `Authorization: Bearer $CRON_SECRET` |
+| PnL más preciso | `pages/api/resolve-positions.js` | Usar odds reales del CLOB en lugar de simplificados |
+| Dashboard UI | (nuevo) | Página para ver posiciones y bankroll en tiempo real |
+
+---
+
+## Stack
+
+- **Runtime**: Next.js 16 (Pages Router)
+- **DB**: Supabase (PostgreSQL)
+- **AI**: Groq — `llama-3.3-70b-versatile`
+- **Data**: Polymarket CLOB API (`clob.polymarket.com`)
+- **Deploy**: Vercel con cron jobs
+
+---
+
+## Website Development Best Practices
 
 *I for Command, *L for Agent
 
