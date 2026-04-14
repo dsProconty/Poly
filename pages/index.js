@@ -150,27 +150,27 @@ export default function Dashboard() {
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <StatCard
-              label="Available Cash"
+              label="Saldo Disponible"
               value={fmt(bankroll?.available_cash)}
-              sub={`Initial: ${fmt(bankroll?.initial_bankroll)}`}
+              sub={`Inicial: ${fmt(bankroll?.initial_bankroll)}`}
               accent={parseFloat(bankroll?.available_cash) >= parseFloat(bankroll?.initial_bankroll) ? 'text-emerald-400' : 'text-rose-400'}
             />
             <StatCard
-              label="Open Exposure"
+              label="Dinero en Juego"
               value={fmt(openExposure)}
-              sub={`${open.length} posición${open.length !== 1 ? 'es' : ''} activa${open.length !== 1 ? 's' : ''}`}
+              sub={`${open.length} apuesta${open.length !== 1 ? 's' : ''} activa${open.length !== 1 ? 's' : ''}`}
               accent="text-yellow-300"
             />
             <StatCard
-              label="Total PnL"
+              label="Ganancia / Pérdida"
               value={fmt(totalPnl)}
-              sub={`${wins}W / ${losses}L`}
+              sub={`${wins} ganadas / ${losses} perdidas`}
               accent={totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}
             />
             <StatCard
-              label="Win Rate"
+              label="Tasa de Acierto"
               value={winRate != null ? `${winRate}%` : '—'}
-              sub={`${wins + losses} cerradas`}
+              sub={`${wins + losses} apuestas cerradas`}
               accent="text-zinc-200"
             />
           </div>
@@ -188,11 +188,11 @@ export default function Dashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 text-xs text-zinc-500 uppercase tracking-wider">
-                    <th className="text-left px-4 py-3 font-medium">Mercado</th>
-                    <th className="text-left px-4 py-3 font-medium">Lado</th>
-                    <th className="text-right px-4 py-3 font-medium">Stake</th>
-                    <th className="text-right px-4 py-3 font-medium">Mkt %</th>
-                    <th className="text-right px-4 py-3 font-medium">Agente %</th>
+                    <th className="text-left px-4 py-3 font-medium">Partido</th>
+                    <th className="text-left px-4 py-3 font-medium">Apuesta</th>
+                    <th className="text-right px-4 py-3 font-medium">Monto</th>
+                    <th className="text-right px-4 py-3 font-medium">Prob. Mercado</th>
+                    <th className="text-right px-4 py-3 font-medium">Prob. Agente</th>
                     <th className="text-left px-4 py-3 font-medium">Estado</th>
                   </tr>
                 </thead>
@@ -228,10 +228,10 @@ export default function Dashboard() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="border-b border-zinc-800 text-xs text-zinc-500 uppercase tracking-wider">
-                    <th className="text-left px-4 py-3 font-medium">Mercado</th>
-                    <th className="text-left px-4 py-3 font-medium">Lado</th>
-                    <th className="text-right px-4 py-3 font-medium">Stake</th>
-                    <th className="text-right px-4 py-3 font-medium">PnL</th>
+                    <th className="text-left px-4 py-3 font-medium">Partido</th>
+                    <th className="text-left px-4 py-3 font-medium">Apuesta</th>
+                    <th className="text-right px-4 py-3 font-medium">Monto</th>
+                    <th className="text-right px-4 py-3 font-medium">Ganancia/Pérdida</th>
                     <th className="text-left px-4 py-3 font-medium">Resultado</th>
                   </tr>
                 </thead>
