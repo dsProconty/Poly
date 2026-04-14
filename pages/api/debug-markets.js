@@ -23,10 +23,11 @@ export default async function handler(req, res) {
       ).length,
       mercados_raw: markets.map(m => ({
         question: m.question,
-        volume: parseFloat(m.volume),
+        volume: parseFloat(m.volume) || 0,
         active: m.active,
         resolved: m.resolved,
-      })),
+        pasa_filtro: (parseFloat(m.volume) || 0) > minVolume && (requireVs ? m.question?.includes(' vs ') : true),
+      })).sort((a, b) => b.volume - a.volume), // ordenar por volumen
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });
