@@ -1,15 +1,23 @@
 import { createClient } from '@supabase/supabase-js';
-import { getSportsMarkets } from '../lib/polymarket.js';
-import { analyzeMarket, getBankrollStake } from '../lib/agents.js';
+import { getSportsMarkets } from '../../lib/polymarket.js';
+import { analyzeMarket, getBankrollStake } from '../../lib/agents.js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
   process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const MAX_MARKETS_PER_RUN = 3; // límite para controlar gasto de tokens
+const MAX_MARKETS_PER_RUN = 1; // 1 en Vercel Hobby (timeout 10s)
 
 export default async function handler(req, res) {
+  // Auth guard para cron jobs (opcional — solo activo si CRON_SECRET está definido)
+  if (process.env.CRON_SECRET) {
+    const auth = req.headers.authorization;
+    if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
   const log = [];
 
   try {

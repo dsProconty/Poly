@@ -1,5 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
-import { getMarketById } from '../lib/polymarket.js';
+import { getMarketById } from '../../lib/polymarket.js';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -7,6 +7,14 @@ const supabase = createClient(
 );
 
 export default async function handler(req, res) {
+  // Auth guard para cron jobs (opcional — solo activo si CRON_SECRET está definido)
+  if (process.env.CRON_SECRET) {
+    const auth = req.headers.authorization;
+    if (auth !== `Bearer ${process.env.CRON_SECRET}`) {
+      return res.status(401).json({ error: 'Unauthorized' });
+    }
+  }
+
   const log = [];
 
   try {
@@ -52,18 +60,18 @@ export default async function handler(req, res) {
       const marketOutcome = marketData.outcome; // "Yes" o "No"
       const betWon = position.rec_side?.toUpperCase() === marketOutcome?.toUpperCase();
 
-      // Cálculo simple de PnL para paper trading:
-      // - Si ganó: recupera el stake (asume pago 1:1 aproximado)
-      // - Si perdió: pierde el stake
-      // Nota: Polymarket paga según probabilidades reales (1/prob - 1)
-      // Para paper trading simple usamos retorno estimado basado en market_prob
+      // PnL usando odds reales de Polymarket al momento de la apuesta:
+      // Polymarket paga $1 por token ganador. Si compré YES a precio p (0-1),
+      // cada token costó $p y vale $1 al resolver → ganancia = (1/p - 1) * stake
+      // Si aposté NO, el precio fue (1 - p) → ganancia = (1/(1-p) - 1) * stake
       let pnl;
       if (betWon) {
-        // Retorno proporcional a la probabilidad implícita al momento de la apuesta
-        const impliedOdds = position.market_prob > 0
-          ? (100 / position.market_prob)
-          : 2;
-        pnl = parseFloat(((impliedOdds - 1) * position.stake_usd).toFixed(2));
+        const p = parseFloat(position.market_prob) / 100; // probabilidad 0-1
+        const entryPrice = position.rec_side?.toUpperCase() === 'YES'
+          ? (p > 0 ? p : 0.5)
+          : (p < 1 ? (1 - p) : 0.5);
+        const netOdds = (1 / entryPrice) - 1;
+        pnl = parseFloat((netOdds * parseFloat(position.stake_usd)).toFixed(2));
       } else {
         pnl = -parseFloat(position.stake_usd);
       }
