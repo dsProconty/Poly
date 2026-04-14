@@ -16,10 +16,11 @@ export default async function handler(req, res) {
 
   const endpoint = action === 'resolve' ? '/api/resolve-positions' : '/api/run-bot';
 
-  // En Vercel, VERCEL_URL es el hostname sin protocolo
-  const baseUrl = process.env.VERCEL_URL
-    ? `https://${process.env.VERCEL_URL}`
-    : 'http://localhost:3000';
+  // APP_URL tiene prioridad (configurar en Vercel env vars)
+  // VERCEL_URL es el hostname automático por deployment (fallback)
+  const baseUrl = process.env.APP_URL
+    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
+    || 'http://localhost:3000';
 
   const headers = { 'Content-Type': 'application/json' };
   if (process.env.CRON_SECRET) {
