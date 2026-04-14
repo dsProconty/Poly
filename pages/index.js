@@ -1,4 +1,12 @@
 import { useState, useEffect, useCallback } from 'react';
+import { isValidSession } from './api/auth';
+
+export async function getServerSideProps({ req }) {
+  if (!isValidSession(req)) {
+    return { redirect: { destination: '/login', permanent: false } };
+  }
+  return { props: {} };
+}
 
 const fmt = (n) =>
   n == null ? '—' : `$${parseFloat(n).toFixed(2)}`;
@@ -103,6 +111,12 @@ export default function Dashboard() {
             className="text-xs text-zinc-500 hover:text-zinc-300 transition-colors px-3 py-1.5 border border-zinc-800 rounded hover:border-zinc-600"
           >
             ↻ Refresh
+          </button>
+          <button
+            onClick={async () => { await fetch('/api/auth', { method: 'DELETE' }); window.location.href = '/login'; }}
+            className="text-xs text-zinc-600 hover:text-zinc-400 transition-colors px-3 py-1.5 border border-zinc-800 rounded hover:border-zinc-700"
+          >
+            Salir
           </button>
           <button
             onClick={() => runAction('run-bot', 'run-bot')}
