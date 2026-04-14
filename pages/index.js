@@ -59,11 +59,11 @@ export default function Dashboard() {
     return () => clearInterval(id);
   }, [fetchStatus]);
 
-  async function runAction(endpoint, label) {
+  async function runAction(action, label) {
     setRunning(label);
     setActionLog(null);
     try {
-      const res = await fetch(endpoint, { method: 'POST' });
+      const res = await fetch(`/api/trigger?action=${action}`, { method: 'POST' });
       const json = await res.json();
       setActionLog({ label, ok: res.ok, data: json });
       await fetchStatus();
@@ -105,14 +105,14 @@ export default function Dashboard() {
             ↻ Refresh
           </button>
           <button
-            onClick={() => runAction('/api/run-bot', 'run-bot')}
+            onClick={() => runAction('run-bot', 'run-bot')}
             disabled={!!running}
             className="text-xs px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded font-semibold transition-colors"
           >
             {running === 'run-bot' ? '⏳ Running…' : '▶ Run Bot'}
           </button>
           <button
-            onClick={() => runAction('/api/resolve-positions', 'resolve')}
+            onClick={() => runAction('resolve', 'resolve')}
             disabled={!!running}
             className="text-xs px-3 py-1.5 bg-zinc-700 hover:bg-zinc-600 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded font-semibold transition-colors"
           >
