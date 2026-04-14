@@ -1,8 +1,16 @@
+import { createClient } from '@supabase/supabase-js';
+import { runBot } from '../../lib/runBot.js';
+import { resolvePositions } from '../../lib/resolvePositions.js';
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
 /**
- * Proxy interno para el dashboard.
- * Reenvía la acción al endpoint correspondiente incluyendo
- * el Authorization header si CRON_SECRET está configurado.
- * Este endpoint NO es un cron job — no necesita auth guard propio.
+ * Endpoint interno para el dashboard.
+ * Llama la lógica directamente (sin HTTP interno) para evitar
+ * problemas de routing en Vercel serverless.
  */
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,23 +22,12 @@ export default async function handler(req, res) {
     return res.status(400).json({ error: 'action debe ser "run-bot" o "resolve"' });
   }
 
-  const endpoint = action === 'resolve' ? '/api/resolve-positions' : '/api/run-bot';
-
-  // APP_URL tiene prioridad (configurar en Vercel env vars)
-  // VERCEL_URL es el hostname automático por deployment (fallback)
-  const baseUrl = process.env.APP_URL
-    || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : null)
-    || 'http://localhost:3000';
-
-  const headers = { 'Content-Type': 'application/json' };
-  if (process.env.CRON_SECRET) {
-    headers['Authorization'] = `Bearer ${process.env.CRON_SECRET}`;
-  }
-
   try {
-    const upstream = await fetch(`${baseUrl}${endpoint}`, { method: 'POST', headers });
-    const data = await upstream.json();
-    return res.status(upstream.status).json(data);
+    const result = action === 'resolve'
+      ? await resolvePositions(supabase)
+      : await runBot(supabase);
+
+    return res.json(result);
   } catch (err) {
     return res.status(500).json({ error: err.message });
   }
