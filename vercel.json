@@ -1,3 +1,6 @@
 {
-  "crons": []
+  "crons": [
+    { "path": "/api/run-bot",           "schedule": "0 */6 * * *" },
+    { "path": "/api/resolve-positions", "schedule": "0 * * * *"   }
+  ]
 }

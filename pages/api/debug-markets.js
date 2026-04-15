@@ -25,6 +25,9 @@ const SPORTS_CONFIRM = [
 
 function classify(m) {
   const text = ((m.question || '') + ' ' + (m.title || '')).toLowerCase();
+  // FIX: rechazar mercados cuya fecha de partido ya pasó
+  const pastDate = text.match(/win on (\d{4}-\d{2}-\d{2})/);
+  if (pastDate && new Date(pastDate[1]) < new Date()) return 'REJECTED:past-game-date';
   if (FUTURES.some(k => text.includes(k)))        return 'REJECTED:futures';
   if (NON_SPORTS.some(k => text.includes(k)))     return 'REJECTED:non-sports';
   if (ESPORTS.some(k => text.includes(k)))        return 'REJECTED:esports';
@@ -48,6 +51,8 @@ function parseYesPrice(m) {
   return 0;
 }
 
+const SPORT_TAGS = ['nba', 'nfl', 'mlb', 'nhl', 'mls', 'ufc', 'tennis', 'soccer'];
+
 export default async function handler(req, res) {
   try {
     const GAMMA    = 'https://gamma-api.polymarket.com';
@@ -56,7 +61,20 @@ export default async function handler(req, res) {
     const MAX_P    = parseFloat(process.env.MAX_YES_PROB || '80');
     const MAX_DAYS = parseInt(process.env.MAX_DAYS_TO_RESOLVE || '30');
 
-    // Paginación dual: por fecha (partidos próximos) + por volumen (NBA/MLB/NHL populares)
+    // Fuente 1: Events por tag_slug (NBA, NHL, MLB, etc.)
+    const byTags = await Promise.all(
+      SPORT_TAGS.map(tag =>
+        fetch(`${GAMMA}/events?active=true&closed=false&tag_slug=${tag}&limit=200`)
+          .then(r => r.ok ? r.json() : [])
+          .then(data => {
+            const events = Array.isArray(data) ? data : (data.data || []);
+            return events.flatMap(e => e.markets || [e]);
+          })
+          .catch(() => [])
+      )
+    ).then(r => r.flat());
+
+    // Fuente 2: Paginación dual por fecha + volumen
     const [byDate, byVolume] = await Promise.all([
       Promise.all([0,1,2,3,4].map(i =>
         fetch(`${GAMMA}/markets?active=true&closed=false&archived=false&limit=100&offset=${i*100}&order=endDate&ascending=true`)
@@ -68,7 +86,8 @@ export default async function handler(req, res) {
       )).then(b => b.flat()),
     ]);
 
-    const raw = [...byDate, ...byVolume];
+    // Combinar las tres fuentes, tags primero (mayor prioridad)
+    const raw = [...byTags, ...byDate, ...byVolume];
     const seen = new Set();
     const unique = raw.filter(m => {
       const id = m.conditionId || m.condition_id;
@@ -97,7 +116,7 @@ export default async function handler(req, res) {
 
     return res.json({
       total_paginados: unique.length,
-      fuentes: { por_fecha: byDate.length, por_volumen: byVolume.length },
+      fuentes: { por_tags: byTags.length, por_fecha: byDate.length, por_volumen: byVolume.length },
       filtros: { MIN_VOL, MIN_P, MAX_P, MAX_DAYS },
       resumen: summary,
       aceptados_count: aceptados.length,
