@@ -132,6 +132,22 @@ export default function Dashboard() {
           >
             {running === 'resolve' ? '⏳ Resolving…' : '✓ Resolve'}
           </button>
+          <button
+            onClick={async () => {
+              if (!confirm('¿Resetear bankroll a $100 y borrar todas las posiciones?')) return;
+              setRunning('reset');
+              try {
+                const r = await fetch('/api/reset', { method: 'POST' });
+                const j = await r.json();
+                setActionLog({ label: 'reset', ok: r.ok, data: j });
+                await fetchStatus();
+              } finally { setRunning(null); }
+            }}
+            disabled={!!running}
+            className="text-xs px-3 py-1.5 bg-red-800 hover:bg-red-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded font-semibold transition-colors"
+          >
+            {running === 'reset' ? '⏳ Resetting…' : '⚠ Reset'}
+          </button>
         </div>
       </header>
 
