@@ -1,6 +1,7 @@
 import { createClient } from '@supabase/supabase-js';
 import { runBot } from '../../lib/runBot.js';
 import { resolvePositions } from '../../lib/resolvePositions.js';
+import { isValidSession } from './auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -15,6 +16,10 @@ const supabase = createClient(
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
+  }
+
+  if (!isValidSession(req)) {
+    return res.status(401).json({ error: 'Unauthorized' });
   }
 
   const { action } = req.query;
