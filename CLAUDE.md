@@ -43,61 +43,69 @@ SUPABASE_SERVICE_ROLE_KEY=...
 
 | Endpoint | Schedule | Qué hace |
 |---|---|---|
-| `/api/run-bot` | `0 */6 * * *` | Cada 6 horas — evalúa mercados y apuesta |
-| `/api/resolve-positions` | `0 * * * *` | Cada hora — cierra posiciones resueltas |
+| `/api/run-bot` | `0 12 * * *` | 12:00 UTC diario — evalúa mercados y apuesta |
+| `/api/resolve-positions` | `0 6 * * *` | 06:00 UTC diario — cierra posiciones resueltas |
+
+> ⚠️ Vercel Hobby plan: máximo 1 ejecución por día por cron job.
 
 ---
 
-## Estado actual ✅ Completado
+## Estado actual ✅ En producción
 
 - [x] `package.json` — next@16.2.3 + @supabase/supabase-js, 0 vulnerabilidades
 - [x] `next.config.js` — mínimo
-- [x] `lib/polymarket.js` — copiado desde polym/
-- [x] `lib/agents.js` — copiado desde polym/
-- [x] `pages/api/run-bot.js` — copiado desde polym/
-- [x] `pages/api/resolve-positions.js` — copiado desde polym/
+- [x] `lib/polymarket.js` — `fetchEventsByTags()` descubre 12,000+ mercados por tag de deporte
+- [x] `lib/agents.js` — Agente 1 con prompt mejorado para mercados sin contexto Tavily
+- [x] `pages/api/run-bot.js` — evalúa mercados, coloca apuestas, auth por CRON_SECRET
+- [x] `pages/api/resolve-positions.js` — cierra posiciones resueltas, auth por CRON_SECRET
+- [x] `pages/api/debug-markets.js` — diagnóstico de mercados aceptados/rechazados
+- [x] `pages/api/trigger.js` — disparo manual desde dashboard (auth por sesión)
+- [x] `pages/api/status.js` — estado del bankroll y posiciones (auth por sesión)
+- [x] `pages/api/reset.js` — resetear bankroll y posiciones (auth por CRON_SECRET o sesión)
+- [x] `pages/api/auth.js` — login del dashboard (HMAC cookie, DASHBOARD_PASSWORD)
+- [x] `pages/index.js` — dashboard UI con posiciones, bankroll, botón Trigger
+- [x] `pages/login.js` — página de login
 - [x] `supabase/schema.sql` — 3 tablas con índices y constraints
-- [x] `vercel.json` — 2 cron jobs configurados
-- [x] `.env.local.example` — plantilla de variables
-- [x] `npm install` — dependencias instaladas
+- [x] `vercel.json` — 2 cron jobs (daily, compatible con Hobby plan)
+- [x] `.env.local.example` — plantilla completa de variables
+- [x] Deploy en producción: **https://poly-sand.vercel.app** (commit `8f0916e`)
+
+### Validación de debug-markets (15 Apr 2026)
+```json
+{
+  "total_paginados": 12112,
+  "fuentes": { "por_tags": 12005, "por_fecha": 500, "por_volumen": 300 },
+  "aceptados_count": 48
+}
+```
+✅ 48 mercados reales activos (NBA Play-In, MLS, fútbol europeo/asiático)
+✅ Sin mercados pasados contaminando resultados
+✅ Descubrimiento por tag_slug funcionando (12,005 desde tags)
 
 ---
 
 ## Próximos pasos
 
-### 1. Supabase — Crear tablas
-1. Ir a [supabase.com](https://supabase.com) → tu proyecto → **SQL Editor**
-2. Pegar y ejecutar el contenido de `supabase/schema.sql`
-3. Verificar que las 3 tablas aparecen en **Table Editor**
+### 1. Probar el bot manualmente
+Ir a **https://poly-sand.vercel.app** → login con `DASHBOARD_PASSWORD` → clic en **Trigger Bot**
 
-### 2. Variables de entorno local
-```bash
-cp .env.local.example .env.local
-# Editar .env.local con tus claves reales
-```
-
-- **GROQ_API_KEY** → [console.groq.com](https://console.groq.com) → API Keys
-- **NEXT_PUBLIC_SUPABASE_URL** → Supabase → Project Settings → API → Project URL
-- **SUPABASE_SERVICE_ROLE_KEY** → Supabase → Project Settings → API → service_role key
-
-### 3. Test local
-```bash
-npm run dev
-# En otro terminal:
-curl http://localhost:3000/api/run-bot
-curl http://localhost:3000/api/resolve-positions
-```
-
-Respuesta esperada de `run-bot`:
+Respuesta esperada:
 ```json
 { "status": "ok", "marketsEvaluados": 3, "apuestasColocadas": 1, "cashRestante": 97.5 }
 ```
 
-### 4. Deploy en Vercel
-```bash
-vercel --prod
-# Agregar las 3 env vars en Vercel Dashboard → Settings → Environment Variables
-```
+### 2. Verificar variables de entorno en Vercel
+En Vercel Dashboard → Project `poly` → Settings → Environment Variables, confirmar:
+- `GROQ_API_KEY` ✓
+- `NEXT_PUBLIC_SUPABASE_URL` ✓
+- `SUPABASE_SERVICE_ROLE_KEY` ✓
+- `DASHBOARD_PASSWORD` ✓
+- `CRON_SECRET` ✓
+- `TAVILY_API_KEY` (opcional — el bot funciona sin él, solo hace menos investigación)
+- `MAX_DAYS_TO_RESOLVE` = `30` (recomendado, el default es 7)
+
+### 3. Upgrade a Vercel Pro (opcional)
+Para habilitar crons más frecuentes (cada 6h para run-bot, cada 1h para resolve-positions).
 
 ---
 
@@ -105,10 +113,10 @@ vercel --prod
 
 | Item | Archivo | Detalle |
 |---|---|---|
-| Timeout en Hobby plan | `pages/api/run-bot.js` | Reducir `MAX_MARKETS_PER_RUN` de 3 → 1 |
-| Auth cron | `pages/api/*.js` | Validar header `Authorization: Bearer $CRON_SECRET` |
+| MAX_DAYS muy corto | env var | Subir `MAX_DAYS_TO_RESOLVE` de 7 → 30 en Vercel |
 | PnL más preciso | `pages/api/resolve-positions.js` | Usar odds reales del CLOB en lugar de simplificados |
-| Dashboard UI | (nuevo) | Página para ver posiciones y bankroll en tiempo real |
+| Mercados "no-keyword" | `lib/polymarket.js` | Los "Will Giannis play for X?" no tienen keyword — podrían filtrarse mejor |
+| Upgrade crons | `vercel.json` | Con Pro plan: run-bot cada 6h, resolve-positions cada 1h |
 
 ---
 
