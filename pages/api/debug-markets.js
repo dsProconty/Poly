@@ -15,7 +15,9 @@ const SPORTS_CONFIRM = [
   'win game ','to win game',
   'game 1','game 2','game 3','game 4','game 5','game 6','game 7',
   'nba','nfl','mlb','nhl','mls','ufc','atp','wta','pga',
-  'premier league','la liga','champions league','europa league','bundesliga','serie a','ligue 1',
+  'premier league','la liga','champions league','europa league','conference league',
+  'bundesliga','serie a','ligue 1','eredivisie','primeira liga','super lig',
+  'ucl ','uefa','cl final','cl quarter','cl semi',
   'ncaa','copa america','wimbledon','us open','french open','australian open','ipl','cricket',
   ' playoff',' playoffs','conference final','semifinal','quarterfinal',
   'celtics','lakers','warriors','nuggets','thunder','timberwolves','cavaliers','knicks','pacers','heat','bucks','76ers',
@@ -51,7 +53,16 @@ function parseYesPrice(m) {
   return 0;
 }
 
-const SPORT_TAGS = ['nba', 'nfl', 'mlb', 'nhl', 'mls', 'ufc', 'tennis', 'soccer'];
+const SPORT_TAGS = [
+  'nba', 'nfl', 'mlb', 'nhl', 'mls', 'ufc', 'tennis',
+  'soccer',
+  'champions-league', 'europa-league', 'conference-league',
+  'premier-league', 'la-liga', 'serie-a', 'bundesliga', 'ligue-1',
+  'eredivisie', 'primeira-liga', 'super-lig',
+  'world-cup', 'copa-america', 'euro-2024',
+  'nba-playoffs',
+  'cricket', 'rugby',
+];
 
 export default async function handler(req, res) {
   try {
