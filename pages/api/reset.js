@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { isValidSession } from './auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -12,38 +13,32 @@ export default async function handler(req, res) {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  // Proteger con CRON_SECRET o DASHBOARD_PASSWORD
+  // Acepta sesión del dashboard O CRON_SECRET
   const auth = req.headers.authorization;
-  if (process.env.CRON_SECRET && auth !== `Bearer ${process.env.CRON_SECRET}`) {
+  const hasCronAuth = process.env.CRON_SECRET && auth === `Bearer ${process.env.CRON_SECRET}`;
+  const hasSessionAuth = isValidSession(req);
+
+  if (!hasCronAuth && !hasSessionAuth) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
 
   try {
-    // 1. Borrar todas las posiciones
     const { error: posErr } = await supabase
       .from('positions')
       .delete()
-      .neq('id', '00000000-0000-0000-0000-000000000000'); // borrar todo
-
+      .neq('id', '00000000-0000-0000-0000-000000000000');
     if (posErr) throw new Error(`Error borrando posiciones: ${posErr.message}`);
 
-    // 2. Borrar trades_log
     const { error: logErr } = await supabase
       .from('trades_log')
       .delete()
       .neq('id', '00000000-0000-0000-0000-000000000000');
-
     if (logErr) throw new Error(`Error borrando trades_log: ${logErr.message}`);
 
-    // 3. Resetear bankroll
     const { error: bankErr } = await supabase
       .from('bankroll_state')
-      .update({
-        available_cash: INITIAL_BANKROLL,
-        updated_at: new Date().toISOString(),
-      })
+      .update({ available_cash: INITIAL_BANKROLL, updated_at: new Date().toISOString() })
       .neq('id', '00000000-0000-0000-0000-000000000000');
-
     if (bankErr) throw new Error(`Error reseteando bankroll: ${bankErr.message}`);
 
     return res.json({
