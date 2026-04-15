@@ -6,13 +6,19 @@ export default async function handler(req, res) {
   try {
     const GAMMA = 'https://gamma-api.polymarket.com';
 
-    // Fetch sin tag (como el bot ahora)
-    const r1 = await fetch(`${GAMMA}/markets?active=true&closed=false&archived=false&limit=100&order=endDate&ascending=true`);
-    const raw = r1.ok ? await r1.json() : [];
+    const SPORT_TAGS = ['nba','nfl','nhl','mlb','soccer','tennis','mma','cricket','ufc','golf','rugby'];
 
-    // Fetch con tag sports para comparar
-    const r2 = await fetch(`${GAMMA}/markets?active=true&closed=false&tag_slug=sports&limit=100&order=endDate&ascending=true`);
-    const rawSports = r2.ok ? await r2.json() : [];
+    // Fetch por tags específicos en paralelo
+    const batches = await Promise.all(
+      SPORT_TAGS.map(tag =>
+        fetch(`${GAMMA}/markets?active=true&closed=false&archived=false&tag_slug=${tag}&limit=15&order=endDate&ascending=true`)
+          .then(r => r.ok ? r.json() : [])
+          .then(arr => arr.map(m => ({ ...m, _tag: tag })))
+          .catch(() => [])
+      )
+    );
+    const raw = batches.flat();
+    const rawSports = raw; // mismo set para comparar
 
     const NON_SPORTS = ['invade','invasion','taiwan','ceasefire','election','president','congress','senate','nuclear','war ','legislation','government','treaty','sanctions','referendum','bitcoin','btc','ethereum','eth','crypto','token','nft','coin','stock','nasdaq','interest rate','fed rate','recession','gta','album','movie','film','song','award','oscar','grammy','emmy','box office','rihanna','taylor','kanye','drake','carti','playboi','rapper','singer','actress','actor','jesus','christ','god ','allah','alien','ufo','apocalypse','hurricane','earthquake','tornado','flood','tsunami','iphone','android','openai','chatgpt','tesla','spacex'];
     const FUTURES = ['stanley cup','nba finals','nba champion','super bowl','world series','nhl champion','mlb champion','nfl champion','win the cup','win the title','win the league','win the season','la liga title','premier league title','bundesliga title','champions league winner','world cup winner','mvp award','rookie of the year','cy young','hart trophy','heisman','golden boot'];
