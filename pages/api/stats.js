@@ -4,7 +4,6 @@
  * Protegido igual que status.js si DASHBOARD_PASSWORD está configurado.
  */
 import { createClient } from '@supabase/supabase-js';
-import { isValidSession } from './auth';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL,
@@ -13,11 +12,6 @@ const supabase = createClient(
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' });
-
-  // Si hay password configurado, requerir sesión
-  if (process.env.DASHBOARD_PASSWORD && !isValidSession(req)) {
-    return res.status(401).json({ error: 'Unauthorized' });
-  }
 
   try {
     const [bankrollRes, allPositionsRes] = await Promise.all([
