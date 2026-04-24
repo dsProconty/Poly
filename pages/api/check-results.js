@@ -43,10 +43,10 @@ function parseYesPrice(market) {
 
 async function fetchMarketPrice(conditionId) {
   try {
-    const res = await fetch(`${GAMMA}/markets/${conditionId}`);
+    // Gamma API requiere ?condition_ids= no /{id}
+    const res = await fetch(`${GAMMA}/markets?condition_ids=${conditionId}`);
     if (!res.ok) return null;
     const data = await res.json();
-    // data puede ser objeto o array
     const market = Array.isArray(data) ? data[0] : data;
     if (!market) return null;
     return {
