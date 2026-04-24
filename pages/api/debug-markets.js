@@ -5,7 +5,7 @@
 const NON_SPORTS  = ['invade','invasion','taiwan','ceasefire','election','president','congress','senate','nuclear','war ','bitcoin','btc','ethereum','eth','crypto','gta','album','movie','rihanna','taylor','kanye','carti','playboi','rapper','jesus','christ','alien','hurricane','earthquake','openai','chatgpt','tesla'];
 const FUTURES     = ['nba champion','nba mvp','super bowl','nfl champion','world series','mlb champion','stanley cup','nhl champion','win the league','win the pennant','win the season','la liga title','premier league title','bundesliga title','champions league winner','world cup winner','ballon d\'or','mvp award','rookie of the year','heisman','golden boot'];
 const ESPORTS     = ['counter-strike','cs2','csgo','valorant','dota','league of legends','overwatch','rocket league','fortnite','pubg','esport'];
-const PROPS       = ['set winner','game winner','map winner','total games','total sets','total maps','over/','under/','spread','handicap',' ats ','bo3','bo5','best of 3','best of 5','first to','most aces','most kills','player props','anytime scorer','correct score','both teams to score','clean sheet'];
+const PROPS       = ['set winner','game winner','map winner','total games','total sets','total maps','over/','under/','spread','handicap',' ats ','bo3','bo5','best of 3','best of 5','first to','most aces','most kills','player props','anytime scorer','correct score','both teams to score','clean sheet','end in a draw','end in draw','in a draw?','will it be a draw','draft pick','be the first pick','be the second pick','be the third pick','mock draft'];
 const SPORTS_CONFIRM = [
   ' vs ',' vs. ',' v ',' v. ',' @ ','win on 20',
   'match winner','match result','moneyline','win the game','win the match',
