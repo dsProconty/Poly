@@ -115,7 +115,7 @@ export default async function handler(req, res) {
     const wins     = resolved.filter(r => r.bot_acerto === '✅ SÍ');
     const losses   = resolved.filter(r => r.bot_acerto === '❌ NO');
     const pending  = results.filter(r => r.market_result === 'pending' || r.market_result === 'unknown');
-    const totalPnl = resolved.reduce((s, r) => s + (r.pnl_estimado ? parseFloat(r.pnl_estimado) : 0), 0);
+    const totalPnl = resolved.reduce((s, r) => s + (r.pnl_estimado ? parseFloat(String(r.pnl_estimado).replace(/[^0-9.\-]/g, '')) : 0), 0);
 
     return res.json({
       resumen: {
