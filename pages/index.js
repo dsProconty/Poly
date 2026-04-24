@@ -223,6 +223,7 @@ export default function Dashboard() {
                     <th className="text-right px-4 py-3 font-medium">Monto</th>
                     <th className="text-right px-4 py-3 font-medium">Prob. Mercado</th>
                     <th className="text-right px-4 py-3 font-medium">Prob. Agente</th>
+                    <th className="text-right px-4 py-3 font-medium">Cierre</th>
                     <th className="text-left px-4 py-3 font-medium">Estado</th>
                   </tr>
                 </thead>
@@ -237,6 +238,9 @@ export default function Dashboard() {
                       <td className="px-4 py-3 text-right text-zinc-200">{fmt(p.stake_usd)}</td>
                       <td className="px-4 py-3 text-right text-zinc-400">{pct(p.market_prob)}</td>
                       <td className="px-4 py-3 text-right text-zinc-200">{pct(p.rec_prob)}</td>
+                      <td className="px-4 py-3 text-right text-zinc-500 text-xs">
+                        {p.end_date ? new Date(p.end_date).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}
+                      </td>
                       <td className="px-4 py-3"><Badge value={p.status} /></td>
                     </tr>
                   ))}
