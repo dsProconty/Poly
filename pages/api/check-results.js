@@ -103,7 +103,8 @@ export default async function handler(req, res) {
             bot_acerto:    botWon === null ? '⏳ pendiente'
               : botWon ? '✅ SÍ' : '❌ NO',
             pnl_estimado:  estimatedPnl !== null
-              ? (estimatedPnl >= 0 ? '+$' : '') + estimatedPnl.toFixed(2) : null,
+              ? (estimatedPnl >= 0 ? '+$' : '-$') + Math.abs(estimatedPnl).toFixed(2) : null,
+            pnl_raw:       estimatedPnl,   // número puro para sumar
             created_at: pos.created_at,
           };
         })
@@ -115,7 +116,7 @@ export default async function handler(req, res) {
     const wins     = resolved.filter(r => r.bot_acerto === '✅ SÍ');
     const losses   = resolved.filter(r => r.bot_acerto === '❌ NO');
     const pending  = results.filter(r => r.market_result === 'pending' || r.market_result === 'unknown');
-    const totalPnl = resolved.reduce((s, r) => s + (r.pnl_estimado ? parseFloat(String(r.pnl_estimado).replace(/[^0-9.\-]/g, '')) : 0), 0);
+    const totalPnl = resolved.reduce((s, r) => s + (r.pnl_raw ?? 0), 0);
 
     return res.json({
       resumen: {
