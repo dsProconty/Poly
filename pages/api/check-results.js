@@ -54,7 +54,7 @@ export default async function handler(req, res) {
   try {
     const { data: positions, error } = await supabase
       .from('positions')
-      .select('id, market_id, question, rec_side, stake_usd, market_prob, created_at')
+      .select('id, market_id, question, rec_side, stake_usd, market_prob, created_at, end_date')
       .eq('status', 'open')
       .order('created_at', { ascending: false });
 
@@ -70,8 +70,15 @@ export default async function handler(req, res) {
       const batchResults = await Promise.all(
         batch.map(async (pos) => {
           const market = await fetchMarketPrice(pos.market_id);
+          // Solo inferir NO por precio si el end_date del mercado ya pasó
+          const endDatePassed = pos.end_date
+            ? new Date(pos.end_date) < new Date()
+            : false;
+          const yesForInference = (market?.yesPrice != null && market.yesPrice < 0.05 && !endDatePassed)
+            ? 0.05 // bloquear inferencia NO prematura: mantener como pending
+            : market?.yesPrice ?? null;
           const { result, confidence } = inferOutcome(
-            market?.yesPrice ?? null,
+            yesForInference,
             market?.resolved ?? false,
             market?.outcome  ?? null,
           );
