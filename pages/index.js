@@ -231,9 +231,12 @@ export default function Dashboard() {
                 <tbody>
                   {open.map((p, i) => (
                     <tr key={p.id} className={`border-b border-zinc-800/60 hover:bg-zinc-900/60 transition-colors ${i === open.length - 1 ? 'border-b-0' : ''}`}>
-                      <td className="px-4 py-3 max-w-xs">
-                        <div className="truncate text-zinc-200">{p.question}</div>
+                      <td className="px-4 py-3 max-w-xs group relative">
+                        <div className="truncate text-zinc-200 cursor-default" title={p.question}>{p.question}</div>
                         <div className="text-xs text-zinc-600 truncate">{p.market_id?.slice(0, 16)}…</div>
+                        <div className="absolute left-0 top-full z-50 hidden group-hover:block bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-200 shadow-xl max-w-sm whitespace-normal pointer-events-none" style={{minWidth:'220px'}}>
+                          {p.question}
+                        </div>
                       </td>
                       <td className="px-4 py-3"><SideBadge side={p.rec_side} /></td>
                       <td className="px-4 py-3 text-right text-zinc-200">{fmt(p.stake_usd)}</td>
@@ -274,8 +277,11 @@ export default function Dashboard() {
                 <tbody>
                   {closed.map((p, i) => (
                     <tr key={p.id} className={`border-b border-zinc-800/60 hover:bg-zinc-900/60 transition-colors ${i === closed.length - 1 ? 'border-b-0' : ''}`}>
-                      <td className="px-4 py-3 max-w-xs">
-                        <div className="truncate text-zinc-200">{p.question}</div>
+                      <td className="px-4 py-3 max-w-xs group relative">
+                        <div className="truncate text-zinc-200 cursor-default" title={p.question}>{p.question}</div>
+                        <div className="absolute left-0 top-full z-50 hidden group-hover:block bg-zinc-800 border border-zinc-700 rounded px-3 py-2 text-xs text-zinc-200 shadow-xl max-w-sm whitespace-normal pointer-events-none" style={{minWidth:'220px'}}>
+                          {p.question}
+                        </div>
                       </td>
                       <td className="px-4 py-3"><SideBadge side={p.rec_side} /></td>
                       <td className="px-4 py-3 text-right text-zinc-400">{fmt(p.stake_usd)}</td>
