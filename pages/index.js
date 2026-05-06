@@ -134,6 +134,13 @@ export default function Dashboard() {
             {running === 'resolve' ? '⏳ Resolving…' : '✓ Resolve'}
           </button>
           <button
+            onClick={() => runAction('close-futures', 'close-futures')}
+            disabled={!!running}
+            className="text-xs px-3 py-1.5 bg-orange-800 hover:bg-orange-700 disabled:opacity-40 disabled:cursor-not-allowed text-white rounded font-semibold transition-colors"
+          >
+            {running === 'close-futures' ? '⏳ Closing…' : '✕ Futures'}
+          </button>
+          <button
             onClick={async () => {
               if (!confirm('¿Resetear bankroll a $100 y borrar todas las posiciones?')) return;
               setRunning('reset');
@@ -195,13 +202,13 @@ export default function Dashboard() {
             <StatCard
               label="Ganancia / Pérdida"
               value={fmt(totalPnl)}
-              sub={`${wins} ganadas / ${losses} perdidas (total)`}
+              sub={`${wins}G / ${losses}P desde el 30 abr`}
               accent={totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}
             />
             <StatCard
               label="Tasa de Acierto"
               value={winRate != null ? `${winRate}%` : '—'}
-              sub={`${wins + losses} apuestas cerradas totales`}
+              sub={`${wins + losses} cerradas desde 30 abr`}
               accent="text-zinc-200"
             />
           </div>
