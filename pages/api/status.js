@@ -16,24 +16,27 @@ export default async function handler(req, res) {
   }
 
   try {
-    const [bankrollRes, positionsRes] = await Promise.all([
+    const [bankrollRes, openRes, closedRes, allClosedRes] = await Promise.all([
       supabase.from('bankroll_state').select('*').single(),
-      supabase
-        .from('positions')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20),
+      supabase.from('positions').select('*').eq('status', 'open').order('created_at', { ascending: false }),
+      supabase.from('positions').select('*').eq('status', 'closed').order('created_at', { ascending: false }).limit(20),
+      supabase.from('positions').select('pnl, outcome').eq('status', 'closed'),
     ]);
 
     if (bankrollRes.error) throw new Error(bankrollRes.error.message);
-    if (positionsRes.error) throw new Error(positionsRes.error.message);
+    if (openRes.error) throw new Error(openRes.error.message);
+    if (closedRes.error) throw new Error(closedRes.error.message);
 
-    const positions = positionsRes.data || [];
+    const allClosed = allClosedRes.data || [];
+    const totalPnl = allClosed.reduce((s, p) => s + parseFloat(p.pnl || 0), 0);
+    const totalWins = allClosed.filter(p => p.outcome === 'win').length;
+    const totalLosses = allClosed.filter(p => p.outcome === 'loss').length;
 
     return res.json({
       bankroll: bankrollRes.data,
-      openPositions: positions.filter(p => p.status === 'open'),
-      closedPositions: positions.filter(p => p.status === 'closed'),
+      openPositions: openRes.data || [],
+      closedPositions: closedRes.data || [],
+      stats: { totalPnl, totalWins, totalLosses, totalClosed: allClosed.length },
     });
   } catch (err) {
     return res.status(500).json({ error: err.message });

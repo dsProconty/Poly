@@ -87,9 +87,10 @@ export default function Dashboard() {
   const closed = data?.closedPositions || [];
 
   const openExposure = open.reduce((s, p) => s + parseFloat(p.stake_usd || 0), 0);
-  const totalPnl = closed.reduce((s, p) => s + parseFloat(p.pnl || 0), 0);
-  const wins = closed.filter(p => p.outcome === 'win').length;
-  const losses = closed.filter(p => p.outcome === 'loss').length;
+  const stats = data?.stats;
+  const totalPnl = stats?.totalPnl ?? 0;
+  const wins = stats?.totalWins ?? 0;
+  const losses = stats?.totalLosses ?? 0;
   const winRate = wins + losses > 0 ? ((wins / (wins + losses)) * 100).toFixed(0) : null;
 
   return (
@@ -194,13 +195,13 @@ export default function Dashboard() {
             <StatCard
               label="Ganancia / Pérdida"
               value={fmt(totalPnl)}
-              sub={`${wins} ganadas / ${losses} perdidas`}
+              sub={`${wins} ganadas / ${losses} perdidas (total)`}
               accent={totalPnl >= 0 ? 'text-emerald-400' : 'text-rose-400'}
             />
             <StatCard
               label="Tasa de Acierto"
               value={winRate != null ? `${winRate}%` : '—'}
-              sub={`${wins + losses} apuestas cerradas`}
+              sub={`${wins + losses} apuestas cerradas totales`}
               accent="text-zinc-200"
             />
           </div>
