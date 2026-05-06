@@ -278,6 +278,7 @@ export default function Dashboard() {
                     <th className="text-right px-4 py-3 font-medium">Monto</th>
                     <th className="text-right px-4 py-3 font-medium">Prob. Mercado</th>
                     <th className="text-right px-4 py-3 font-medium">Ganancia/Pérdida</th>
+                    <th className="text-right px-4 py-3 font-medium">Cierre</th>
                     <th className="text-left px-4 py-3 font-medium">Resultado</th>
                   </tr>
                 </thead>
@@ -295,6 +296,9 @@ export default function Dashboard() {
                       <td className="px-4 py-3 text-right text-zinc-400">{pct(p.market_prob)}</td>
                       <td className={`px-4 py-3 text-right font-semibold ${parseFloat(p.pnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                         {parseFloat(p.pnl) >= 0 ? '+' : ''}{fmt(p.pnl)}
+                      </td>
+                      <td className="px-4 py-3 text-right text-zinc-500 text-xs">
+                        {p.closed_at ? new Date(p.closed_at).toLocaleDateString('es-ES', { day: '2-digit', month: 'short', year: '2-digit' }) : '—'}
                       </td>
                       <td className="px-4 py-3"><Badge value={p.outcome} /></td>
                     </tr>
