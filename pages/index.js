@@ -265,6 +265,7 @@ export default function Dashboard() {
                     <th className="text-left px-4 py-3 font-medium">Partido</th>
                     <th className="text-left px-4 py-3 font-medium">Apuesta</th>
                     <th className="text-right px-4 py-3 font-medium">Monto</th>
+                    <th className="text-right px-4 py-3 font-medium">Prob. Mercado</th>
                     <th className="text-right px-4 py-3 font-medium">Ganancia/Pérdida</th>
                     <th className="text-left px-4 py-3 font-medium">Resultado</th>
                   </tr>
@@ -277,6 +278,7 @@ export default function Dashboard() {
                       </td>
                       <td className="px-4 py-3"><SideBadge side={p.rec_side} /></td>
                       <td className="px-4 py-3 text-right text-zinc-400">{fmt(p.stake_usd)}</td>
+                      <td className="px-4 py-3 text-right text-zinc-400">{pct(p.market_prob)}</td>
                       <td className={`px-4 py-3 text-right font-semibold ${parseFloat(p.pnl) >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
                         {parseFloat(p.pnl) >= 0 ? '+' : ''}{fmt(p.pnl)}
                       </td>
