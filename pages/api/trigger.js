@@ -29,27 +29,38 @@ export default async function handler(req, res) {
 
   try {
     if (action === 'close-futures') {
-      const FUTURES_KEYWORDS = ['2026 fifa world cup', 'win the world cup', 'copa america', 'win the league', 'nba champion', 'super bowl', 'stanley cup'];
+      const STUCK_KEYWORDS = [
+        '2026 fifa world cup', 'win the world cup', 'win the 2026',
+        'copa america', 'nba champion', 'super bowl', 'stanley cup',
+        'strike out the most', 'perfect game',
+      ];
       const { data: stuck } = await supabase
         .from('positions')
         .select('id, question, stake_usd')
         .eq('status', 'open');
 
-      const toClose = (stuck || []).filter(p =>
-        FUTURES_KEYWORDS.some(k => p.question.toLowerCase().includes(k))
+      const toDelete = (stuck || []).filter(p =>
+        STUCK_KEYWORDS.some(k => p.question.toLowerCase().includes(k))
       );
 
-      const closed = [];
-      for (const pos of toClose) {
-        await supabase.from('positions').update({
-          status: 'closed',
-          outcome: 'loss',
-          pnl: -parseFloat(pos.stake_usd),
-          closed_at: new Date().toISOString(),
-        }).eq('id', pos.id);
-        closed.push(pos.question);
-      }
-      return res.json({ closed_count: closed.length, closed });
+      if (!toDelete.length) return res.json({ deleted_count: 0, deleted: [] });
+
+      // Sumar stakes a devolver al bankroll
+      const refund = toDelete.reduce((s, p) => s + parseFloat(p.stake_usd || 0), 0);
+      const ids = toDelete.map(p => p.id);
+
+      // Eliminar posiciones
+      await supabase.from('positions').delete().in('id', ids);
+
+      // Devolver el stake al bankroll
+      const { data: br } = await supabase.from('bankroll_state').select('*').single();
+      const newCash = parseFloat((parseFloat(br.available_cash) + refund).toFixed(2));
+      await supabase.from('bankroll_state').update({
+        available_cash: newCash,
+        updated_at: new Date().toISOString(),
+      }).eq('id', br.id);
+
+      return res.json({ deleted_count: toDelete.length, refund_usd: refund, deleted: toDelete.map(p => p.question) });
     }
 
     const result = action === 'resolve'
