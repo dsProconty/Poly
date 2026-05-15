@@ -30,29 +30,39 @@ export default async function handler(req, res) {
   try {
     if (action === 'close-futures') {
       const STUCK_KEYWORDS = [
-        '2026 fifa world cup', 'win the world cup', 'win the 2026',
-        'copa america', 'nba champion', 'super bowl', 'stanley cup',
-        'strike out the most', 'perfect game',
+        'world cup', 'copa america', 'nba champion', 'super bowl', 'stanley cup',
+        'strike out the most', 'perfect game', 'win the league', 'win the pennant',
+        'win the season', 'win the series', 'nba mvp', 'ballon',
       ];
-      const { data: stuck } = await supabase
+      // Traer TODAS las posiciones abiertas con sus preguntas
+      const { data: stuck, error: fetchErr } = await supabase
         .from('positions')
-        .select('id, question, stake_usd')
+        .select('id, question, stake_usd, end_date, created_at')
         .eq('status', 'open');
 
-      const toDelete = (stuck || []).filter(p =>
-        STUCK_KEYWORDS.some(k => p.question.toLowerCase().includes(k))
-      );
+      if (fetchErr) return res.status(500).json({ error: fetchErr.message });
 
-      if (!toDelete.length) return res.json({ deleted_count: 0, deleted: [] });
+      const toDelete = (stuck || []).filter(p => {
+        const q = p.question.toLowerCase();
+        // Keyword match
+        if (STUCK_KEYWORDS.some(k => q.includes(k))) return true;
+        // Fallback: sin end_date y creada antes del fix (30 abr)
+        if (!p.end_date && new Date(p.created_at) < new Date('2026-04-30T00:00:00Z')) return true;
+        return false;
+      });
 
-      // Sumar stakes a devolver al bankroll
+      if (!toDelete.length) return res.json({ deleted_count: 0, all_open: (stuck||[]).map(p=>p.question) });
+
       const refund = toDelete.reduce((s, p) => s + parseFloat(p.stake_usd || 0), 0);
       const ids = toDelete.map(p => p.id);
 
+      // Eliminar trades_log primero (por si acaso el cascade falla)
+      await supabase.from('trades_log').delete().in('position_id', ids);
       // Eliminar posiciones
-      await supabase.from('positions').delete().in('id', ids);
+      const { error: delErr } = await supabase.from('positions').delete().in('id', ids);
+      if (delErr) return res.status(500).json({ error: delErr.message, ids });
 
-      // Devolver el stake al bankroll
+      // Devolver stake al bankroll
       const { data: br } = await supabase.from('bankroll_state').select('*').single();
       const newCash = parseFloat((parseFloat(br.available_cash) + refund).toFixed(2));
       await supabase.from('bankroll_state').update({
