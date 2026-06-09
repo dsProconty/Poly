@@ -42,10 +42,21 @@ export default async function handler(req, res) {
 
       if (fetchErr) return res.status(500).json({ error: fetchErr.message });
 
+      const PROP_KEYWORDS = [
+        'run scored in the first','score in the first','first inning',
+        'be on the cover','play for','sign with','transfer to','be traded',
+        'most strikeouts','most home runs','most points','most rebounds',
+        'strike out the most','perfect game','be named','be selected',
+      ];
+
       const toDelete = (stuck || []).filter(p => {
         const q = p.question.toLowerCase();
-        // Keyword match
+        // Keyword match: futures atascadas
         if (STUCK_KEYWORDS.some(k => q.includes(k))) return true;
+        // Keyword match: props que se colaron
+        if (PROP_KEYWORDS.some(k => q.includes(k))) return true;
+        // Fallback: end_date ya pasó hace más de 14 días (bets viejas no resueltas)
+        if (p.end_date && new Date(p.end_date) < new Date(Date.now() - 14 * 86400000)) return true;
         // Fallback: sin end_date y creada antes del fix (30 abr)
         if (!p.end_date && new Date(p.created_at) < new Date('2026-04-30T00:00:00Z')) return true;
         return false;

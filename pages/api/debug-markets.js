@@ -7,7 +7,15 @@ const FUTURES     = ['nba champion','nba mvp','super bowl','nfl champion','world
 const ESPORTS     = ['counter-strike','cs2','csgo','valorant','dota','league of legends','overwatch','rocket league','fortnite','pubg','esport'];
 const PROPS       = ['set winner','game winner','map winner','total games','total sets','total maps','over/','under/','spread','handicap',' ats ','bo3','bo5','best of 3','best of 5','first to','most aces','most kills','player props','anytime scorer','correct score','both teams to score','clean sheet','end in a draw','end in draw','in a draw?','will it be a draw','draw at halftime','draw at half','halftime draw','draw in the','result in a draw','finish in a draw','end as a draw',': draw ',': draw?','draft pick','be the first pick','be the second pick','be the third pick','mock draft',
   'removed from','banned from','suspended from','excluded from','disqualified from',
-  'fired from','resign from','retire from','stripped of'];
+  'fired from','resign from','retire from','stripped of',
+  'run scored in the first','score in the first','first inning','first quarter score',
+  'first half score','score first','first blood','first basket',
+  'be on the cover','appear on','sign with','play for','transfer to',
+  'suit up for','start for','feature in','be traded','be released',
+  'most strikeouts','most home runs','most points','most rebounds',
+  'most assists','most touchdowns','most yards','most saves',
+  'be named','win the award','receive the','be selected',
+  'make the all-star','make the roster','be drafted'];
 const SPORTS_CONFIRM = [
   ' vs ',' vs. ',' v ',' v. ',' @ ','win on 20',
   'match winner','match result','moneyline','win the game','win the match',
